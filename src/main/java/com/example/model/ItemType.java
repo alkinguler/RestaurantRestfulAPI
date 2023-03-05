@@ -11,21 +11,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "item")
-public class Item {
+@Table(name = "item_type")
+public class ItemType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long Id;
-
-    @Column(name = "item_type_id")
-    private Long ItemTypeId;
-
-    @Column(name = "name")
-    private String Name;
-
-    @Column(name = "price")
-    private Integer Price;
 
     @Column(name = "description")
     private String Description;

@@ -7,6 +7,7 @@ import com.example.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.List;
 
 @RestController
@@ -44,7 +45,8 @@ public class MenuController {
     @GetMapping("/getItems/{id}")
     public List<Item> getItemsOfMenuById(@PathVariable Long id){
 
-        return null;
+        var i = menuService.getItemsOfAMenuById(id);
+        return i;
     }
 
 }

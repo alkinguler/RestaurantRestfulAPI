@@ -1,16 +1,20 @@
 package com.example.service;
 
+import com.example.dao.ItemRepository;
 import com.example.dao.MenuRepository;
+import com.example.model.Item;
 import com.example.model.Menu;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class MenuService {
     private final MenuRepository menuRepository;
+    private final ItemRepository itemRepository;
 
     public List<Menu> fetchMenuList() {
         return menuRepository.findAll();
@@ -38,5 +42,8 @@ public class MenuService {
     public Menu saveMenu(Menu menu) {
         return menuRepository.save(menu);
     }
-
+    public List<Item> getItemsOfAMenuById(Long id){
+        var i = itemRepository.getItemsOfAMenuById(id);
+        return i;
+    }
 }
