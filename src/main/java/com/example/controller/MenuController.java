@@ -3,6 +3,9 @@ package com.example.controller;
 import com.example.model.Menu;
 import com.example.service.MenuService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.expression.ExpressionException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,9 +23,17 @@ public class MenuController {
         return menuService.fetchMenuList();
     }
 
+
     @GetMapping("/getMenuById/{id}")
-    public Optional<Menu> getMenuById(@PathVariable Long id){
-        return menuService.findMenuById(id);
+    public ResponseEntity<Optional<Menu>> getMenuById(@PathVariable Long id){
+        var result = menuService.findMenuById(id);
+        HttpStatus httpStatus = HttpStatus.OK;
+
+        if(result.isEmpty()){
+           httpStatus = HttpStatus.BAD_REQUEST;
+        }
+
+        return new ResponseEntity<>(result,httpStatus) ;
     }
 
     @GetMapping("/getMenuByDay/{day}")
@@ -32,8 +43,8 @@ public class MenuController {
     }
 
     @PostMapping()
-    public Menu saveMenu(@RequestBody Menu menu){
-        return menuService.saveMenu(menu);
+    public ResponseEntity<Menu> saveMenu(@RequestBody Menu menu){
+        return new ResponseEntity<Menu>(menuService.saveMenu(menu), HttpStatus.OK);
     }
 
     @PutMapping("/{id}")

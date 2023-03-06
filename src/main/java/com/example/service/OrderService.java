@@ -22,29 +22,22 @@ public class OrderService {
     private final ItemRepository itemRepository;
 
     public Order createOrder(OrderDto orderDto){
-        Order order = new Order();
-        order.setUserId(orderDto.getUserId());
-        order.setDate(new Date());
-        Integer totalPrice = 0;
+
+        int totalPrice = 0;
 
         for (OrderItemDto orderItemDto : orderDto.getOrderItems())
-        {
             totalPrice += itemRepository.getItemPriceById(orderItemDto.getItemId()) * orderItemDto.getQuantity();
-        }
-        order.setTotalPrice(totalPrice);
-        Order savedOrder = orderRepository.save(order);
 
-        List<OrderItem> orderItems;
+        Order order = Order.builder().Date(new Date()).UserId(orderDto.getUserId()).TotalPrice(totalPrice).build();
+        Order savedOrder = orderRepository.save(order);
 
         for (OrderItemDto orderItemDto : orderDto.getOrderItems()){
                 Item item = itemRepository.findById(orderItemDto.getItemId()).orElseThrow(
                         () -> new EntityNotFoundException("Item not found with Id: " + orderItemDto.getItemId())
                 );
 
-                OrderItem orderItem = new OrderItem();
-               orderItem.setItemId(item.getId());
-               orderItem.setQuantity(orderItemDto.getQuantity());
-               orderItem.setOrderId(savedOrder.getId());
+                OrderItem orderItem = OrderItem.builder().ItemId(item.getId()).Quantity(orderItemDto.getQuantity()).
+                        OrderId(savedOrder.getId()).build();
                orderItemRepository.save(orderItem);
         }
 
