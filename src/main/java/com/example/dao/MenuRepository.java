@@ -11,5 +11,7 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
     @Query(value = "SELECT * FROM menu WHERE LOWER(day) LIKE lower( CONCAT('%', ?, '%'))", nativeQuery = true)
     public Menu findByDay(String day);
 
+    @Query(value = "SELECT id FROM menu WHERE LOWER(day) LIKE lower( CONCAT('%', ?, '%'))", nativeQuery = true)
+    public Menu findMenuIdByDay(String day);
 
 }

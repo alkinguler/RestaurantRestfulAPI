@@ -20,7 +20,7 @@ public class OrderItem {
     private Long Id;
     @Column( name = "order_id")
     private Long OrderId;
-    @Column( name = "name_id")
+    @Column( name = "item_id")
     private Long ItemId;
 
     @Column( name = "quantity")

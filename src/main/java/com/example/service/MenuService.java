@@ -7,12 +7,14 @@ import com.example.model.Menu;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
+import javax.swing.plaf.synth.Region;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class MenuService {
+
     private final MenuRepository menuRepository;
     private final ItemRepository itemRepository;
 
@@ -34,6 +36,10 @@ public class MenuService {
         });
     }
 
+    public Optional<Menu> findMenuById(Long id) {
+        return menuRepository.findById(id);
+    }
+
 
     public void deleteMenuById(Long menuId){
         menuRepository.deleteById(menuId);
@@ -43,7 +49,12 @@ public class MenuService {
         return menuRepository.save(menu);
     }
     public List<Item> getItemsOfAMenuById(Long id){
-        var i = itemRepository.getItemsOfAMenuById(id);
-        return i;
+
+        return itemRepository.getItemsOfAMenuById(id);
+    }
+
+    public List<Item> getItemsOfAMenuByDay(String day){
+        Menu menu = menuRepository.findByDay(day);
+        return itemRepository.getItemsOfAMenuById(menu.getId());
     }
 }

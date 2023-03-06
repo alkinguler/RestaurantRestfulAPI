@@ -1,14 +1,12 @@
 package com.example.controller;
 
-import com.example.model.Item;
 import com.example.model.Menu;
 import com.example.service.MenuService;
-import com.example.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/menu")
@@ -22,7 +20,12 @@ public class MenuController {
         return menuService.fetchMenuList();
     }
 
-    @GetMapping("/{day}")
+    @GetMapping("/getMenuById/{id}")
+    public Optional<Menu> getMenuById(@PathVariable Long id){
+        return menuService.findMenuById(id);
+    }
+
+    @GetMapping("/getMenuByDay/{day}")
     public Menu getMenuByDay(@PathVariable String day){
         Menu menu = menuService.findMenuByDay(day);
         return menu;
@@ -42,11 +45,6 @@ public class MenuController {
     public void deleteMenuById(@PathVariable Long id){
         menuService.deleteMenuById(id);
     }
-    @GetMapping("/getItems/{id}")
-    public List<Item> getItemsOfMenuById(@PathVariable Long id){
 
-        var i = menuService.getItemsOfAMenuById(id);
-        return i;
-    }
 
 }
