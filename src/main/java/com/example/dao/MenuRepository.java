@@ -1,7 +1,6 @@
 package com.example.dao;
 
-import com.example.model.Item;
-import com.example.model.Menu;
+import com.example.entity.Menu;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -12,6 +11,6 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
     public Menu findByDay(String day);
 
     @Query(value = "SELECT id FROM menu WHERE LOWER(day) LIKE lower( CONCAT('%', ?, '%'))", nativeQuery = true)
-    public Menu findMenuIdByDay(String day);
+    public List<Long> findMenuIdByDay(String day);
 
 }

@@ -1,47 +1,78 @@
 package com.example.service;
 
 import com.example.dao.ItemRepository;
-import com.example.dao.MenuRepository;
 import com.example.dao.OrderItemRepository;
 import com.example.dao.OrderRepository;
+import com.example.entity.Item;
+import com.example.entity.Order;
+import com.example.entity.OrderItem;
 import com.example.model.*;
-import jakarta.persistence.EntityNotFoundException;
+import com.example.request.CreateOrderRequest;
+import com.example.request.UpdateOrderRequest;
+import com.example.response.CreateOrderResponse;
+import com.example.response.GetOrderResponse;
+import com.example.response.UpdateOrderResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class OrderService {
-    private final MenuRepository menuRepository;
     private final OrderRepository orderRepository;
-
     private final OrderItemRepository orderItemRepository;
     private final ItemRepository itemRepository;
 
-    public Order createOrder(OrderDto orderDto){
+    public CreateOrderResponse create(CreateOrderRequest request){
+        OrderModel orderModel = request.getOrder();
 
-        int totalPrice = 0;
+        int TotalPrice = orderModel.getOrderItems()
+                .stream()
+                .mapToInt(
+                        orderItem -> orderItem.getQuantity() * (itemRepository.findById(orderItem.getItem().getItemId()).get().getPrice())
+                )
+                .sum();
 
-        for (OrderItemDto orderItemDto : orderDto.getOrderItems())
-            totalPrice += itemRepository.getItemPriceById(orderItemDto.getItemId()) * orderItemDto.getQuantity();
+        Order order = Order.builder()
+                .UserId(orderModel.getUserId())
+                .Date(new Date())
+                .TotalPrice(TotalPrice)
+                .build();
 
-        Order order = Order.builder().Date(new Date()).UserId(orderDto.getUserId()).TotalPrice(totalPrice).build();
         Order savedOrder = orderRepository.save(order);
 
-        for (OrderItemDto orderItemDto : orderDto.getOrderItems()){
-                Item item = itemRepository.findById(orderItemDto.getItemId()).orElseThrow(
-                        () -> new EntityNotFoundException("Item not found with Id: " + orderItemDto.getItemId())
-                );
+        orderModel.getOrderItems().forEach(
+                orderItemModel -> {
+                    Item item = itemRepository.findById(orderItemModel.getItem().getItemId()).get();
 
-                OrderItem orderItem = OrderItem.builder().ItemId(item.getId()).Quantity(orderItemDto.getQuantity()).
-                        OrderId(savedOrder.getId()).build();
-               orderItemRepository.save(orderItem);
-        }
+                    OrderItem orderItem = OrderItem.builder()
+                            .Quantity(orderItemModel.getQuantity())
+                            .OrderId(savedOrder.getId())
+                            .Item(item)
+                            .build();
 
-        return savedOrder;
+                    orderItemRepository.save(orderItem);
+                }
+        );
+
+        CreateOrderResponse response = CreateOrderResponse
+                .builder()
+                .createdOrder(orderModel)
+                .build();
+
+        return response;
     }
 
+    public GetOrderResponse get(){
+        return null;
+    }
+
+    public UpdateOrderResponse update(UpdateOrderRequest request){
+        return null;
+    }
+
+    public void delete(Long id){
+        return;
+    }
 }

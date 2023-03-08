@@ -1,61 +1,48 @@
 package com.example.controller;
 
-import com.example.model.Menu;
+import com.example.request.CreateMenuRequest;
+import com.example.request.UpdateMenuRequest;
+import com.example.response.CreateMenuResponse;
+import com.example.response.GetMenuResponse;
+import com.example.response.ServiceResponseModel;
+import com.example.response.UpdateMenuResponse;
 import com.example.service.MenuService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.expression.ExpressionException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/menu")
 @RequiredArgsConstructor
 public class MenuController {
     private final MenuService menuService;
-    //private final RestaurantService restaurantService;
 
-    @GetMapping()
-    public List<Menu> findAllMenu(){
-        return menuService.fetchMenuList();
+    @GetMapping
+    public ServiceResponseModel<GetMenuResponse>  get(){
+//        var response = new ServiceResponseModel<GetMenuResponse>();
+//        response.setResponseBody();
+        var x = ServiceResponseModel.success(menuService.get());
+        return x;
     }
 
-
-    @GetMapping("/getMenuById/{id}")
-    public ResponseEntity<Optional<Menu>> getMenuById(@PathVariable Long id){
-        var result = menuService.findMenuById(id);
-        HttpStatus httpStatus = HttpStatus.OK;
-
-        if(result.isEmpty()){
-           httpStatus = HttpStatus.BAD_REQUEST;
-        }
-
-        return new ResponseEntity<>(result,httpStatus) ;
-    }
-
-    @GetMapping("/getMenuByDay/{day}")
-    public Menu getMenuByDay(@PathVariable String day){
-        Menu menu = menuService.findMenuByDay(day);
-        return menu;
+    @GetMapping("/{day}")
+    public ServiceResponseModel<GetMenuResponse> find(@PathVariable String day){
+        return ServiceResponseModel.success(menuService.find(day));
     }
 
     @PostMapping()
-    public ResponseEntity<Menu> saveMenu(@RequestBody Menu menu){
-        return new ResponseEntity<Menu>(menuService.saveMenu(menu), HttpStatus.OK);
+    public ServiceResponseModel<CreateMenuResponse> create(@RequestBody CreateMenuRequest request){
+        return null; // TODO
     }
 
     @PutMapping("/{id}")
-    public Menu updateMenu(@RequestBody Menu menu, @PathVariable Long id){
-        return menuService.updateMenu(menu,id);
+    public ServiceResponseModel<UpdateMenuResponse> update(@RequestBody UpdateMenuRequest request){
+        return null; // TODO
     }
 
     @DeleteMapping("/{id}")
-    public void deleteMenuById(@PathVariable Long id){
-        menuService.deleteMenuById(id);
+    public ServiceResponseModel<?> delete(@PathVariable Long id){
+        menuService.delete(id);
+        return ServiceResponseModel.success();
     }
-
 
 }

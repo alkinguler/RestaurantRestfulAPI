@@ -1,27 +1,28 @@
-package com.example.model;
+package com.example.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@Setter
 @Table(name = "menu_item")
 
 public class MenuItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long Id;
+    private Long id;
 
     @Column(name = "menu_id")
-    private Long MenuId;
-    @Column(name = "item_id")
-    private Long ItemId;
+    private Long menu_id;
+
+    @OneToOne
+    @JoinColumn(name = "item_id")
+    private Item item;
 
 }
