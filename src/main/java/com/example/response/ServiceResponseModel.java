@@ -11,7 +11,7 @@ import lombok.Setter;
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ServiceResponseModel<T> {
-    private boolean success = true;
+    private boolean status = true;
     private T responseBody;
     private ErrorModel error;
     public static ServiceResponseModel<?> empty(){
@@ -26,10 +26,11 @@ public class ServiceResponseModel<T> {
     public static ServiceResponseModel<?> success(){
         return new ServiceResponseModel<>();
     }
-    public static ServiceResponseModel<?> failure(String errorMessage, String errorCode){
+    public static ServiceResponseModel<?> failure(String errorMessage){
         ServiceResponseModel<?> response = new ServiceResponseModel<>();
-        ErrorModel errorModel = new ErrorModel(errorMessage, errorCode);
+        ErrorModel errorModel = new ErrorModel(errorMessage);
         response.setError(errorModel);
+        response.setStatus(false);
 
         return response;
     }

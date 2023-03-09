@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import com.example.request.CreateOrderRequest;
+import com.example.request.GetOrderRequest;
 import com.example.request.UpdateOrderRequest;
 import com.example.response.CreateOrderResponse;
 import com.example.response.GetOrderResponse;
@@ -17,7 +18,8 @@ public class OrderController {
     private final OrderService orderService;
     @PostMapping
     public ServiceResponseModel<CreateOrderResponse> create(@RequestBody CreateOrderRequest request){
-        return ServiceResponseModel.success(orderService.create(request));
+        var x = ServiceResponseModel.success(orderService.create(request));
+        return x;
     }
     @GetMapping
     public ServiceResponseModel<GetOrderResponse> get(){
@@ -29,7 +31,7 @@ public class OrderController {
         return ServiceResponseModel.empty();
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("")
     public ServiceResponseModel<UpdateOrderResponse> update(@RequestBody UpdateOrderRequest request){
         return ServiceResponseModel.success(orderService.update(request));
     }

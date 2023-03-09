@@ -17,14 +17,18 @@ public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column( name = "id")
-    private Long Id;
-    @Column( name = "order_id")
-    private Long OrderId;
+    private Long id;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn( name = "order_id")
+    private Order order;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "item_id")
-    private Item Item;
+    private Item item;
 
     @Column( name = "quantity")
-    private Integer Quantity;
+    private Integer quantity;
+
+
 }
+

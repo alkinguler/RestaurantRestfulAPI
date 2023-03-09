@@ -18,15 +18,14 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long Id;
+    private Long id;
 
     @Column(name = "user_id")
-    private Long UserId;
+    private Long userId;
 
     @Column(name = "date")
-    private Date Date;
+    private Date date;
 
     @Column(name = "total_price")
     private Integer TotalPrice;
-
 }

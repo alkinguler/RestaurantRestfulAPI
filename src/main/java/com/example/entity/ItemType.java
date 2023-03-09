@@ -16,9 +16,9 @@ public class ItemType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long Id;
+    private Long id;
 
     @Column(name = "description")
-    private String Description;
+    private String description;
 
 }

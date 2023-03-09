@@ -9,5 +9,5 @@ import lombok.Setter;
 @Getter
 public class ErrorModel {
     private final String errorMessage;
-    private final String errorCode;
+
 }

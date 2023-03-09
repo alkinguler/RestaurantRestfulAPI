@@ -18,8 +18,10 @@ public class MenuItem {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "menu_id")
-    private Long menu_id;
+
+    @ManyToOne
+    @JoinColumn(name = "menu_id")
+    private Menu menu;
 
     @OneToOne
     @JoinColumn(name = "item_id")

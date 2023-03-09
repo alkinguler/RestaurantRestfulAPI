@@ -18,11 +18,11 @@ public class Menu {
     @Id
     @Column(name = "id",nullable = false, unique = true)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
 
     @Column(name = "day",nullable = false)
-    private String Day;
+    private String day;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "menu_id")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "menu")
     private List<MenuItem> menuItems;
 }

@@ -16,18 +16,18 @@ public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long Id;
+    private Long id;
     @OneToOne()
     @JoinColumn(name = "item_type_id")
-    private ItemType ItemType;
+    private ItemType itemType;
 
     @Column(name = "name")
-    private String Name;
+    private String name;
 
     @Column(name = "price")
-    private Integer Price;
+    private Integer price;
 
     @Column(name = "description")
-    private String Description;
+    private String description;
 
 }
