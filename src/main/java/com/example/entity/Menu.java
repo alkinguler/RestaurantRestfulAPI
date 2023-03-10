@@ -23,6 +23,4 @@ public class Menu {
     @Column(name = "day",nullable = false)
     private String day;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "menu")
-    private List<MenuItem> menuItems;
 }

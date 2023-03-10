@@ -11,5 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 public class OrderUpdateModel {
-    List<Item> updatedOrderItems;
+    private Long order_id;
+    private Long user_id;
+    private List<ItemQuantityModel> updatedOrderItems;
 }

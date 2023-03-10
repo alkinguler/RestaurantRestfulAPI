@@ -1,5 +1,6 @@
 package com.example.request;
 
+import com.example.model.ItemQuantityModel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,5 +14,5 @@ import java.util.List;
 @AllArgsConstructor
 public class UpdateOrderRequest {
     Long orderId;
-    List<Long> ItemIds;
+    List<ItemQuantityModel> itemQuantityModels;
 }

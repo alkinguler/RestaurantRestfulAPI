@@ -1,5 +1,6 @@
 package com.example.service;
 
+import com.example.Constants;
 import com.example.dao.ItemRepository;
 import com.example.dao.OrderItemRepository;
 import com.example.dao.OrderRepository;
@@ -8,18 +9,16 @@ import com.example.entity.Order;
 import com.example.entity.OrderItem;
 import com.example.model.*;
 import com.example.request.CreateOrderRequest;
-import com.example.request.GetOrderRequest;
 import com.example.request.UpdateOrderRequest;
 import com.example.response.CreateOrderResponse;
+import com.example.response.FindOrderResponse;
 import com.example.response.GetOrderResponse;
 import com.example.response.UpdateOrderResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -28,13 +27,16 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final ItemRepository itemRepository;
 
+
     public CreateOrderResponse create(CreateOrderRequest request){
         OrderModel orderModel = request.getOrder();
 
         int TotalPrice = orderModel.getOrderItems()
                 .stream()
                 .mapToInt(
-                        orderItem -> orderItem.getQuantity() * (itemRepository.findById(orderItem.getItem().getItemId()).get().getPrice())
+                        orderItem -> orderItem.getQuantity() * (itemRepository.findById(orderItem.getItem_id())
+                                .orElseThrow(()->new RuntimeException(Constants.ITEM_NOT_FOUND_CONST + orderItem.getItem_id()))
+                                .getPrice())
                 )
                 .sum();
 
@@ -48,7 +50,7 @@ public class OrderService {
 
         orderModel.getOrderItems().forEach(
                 orderItemModel -> {
-                    Item item = itemRepository.findById(orderItemModel.getItem().getItemId()).get();
+                    Item item = itemRepository.findById(orderItemModel.getItem_id()).orElseThrow();
 
                     OrderItem orderItem = OrderItem.builder()
                             .quantity(orderItemModel.getQuantity())
@@ -60,50 +62,125 @@ public class OrderService {
                 }
         );
 
-        CreateOrderResponse response = CreateOrderResponse
+        return CreateOrderResponse
                 .builder()
                 .createdOrder(orderModel)
                 .build();
-
-        return response;
     }
 
     public GetOrderResponse get(){
-        List<Order> orders = orderRepository.findAll();
-        List<OrderModel> orderModels = new ArrayList<>();
+        var orders = orderRepository.findAll();
+        List<OrderFetchModel> orderFetchResponseModels = new ArrayList<>();
 
+        for(var order : orders){
 
-        return null;
+            List<OrderItem> b = orderItemRepository.findAll().stream().filter(x->x.getOrder().getId().equals(order.getId())).toList();
+            List<ItemQuantityModel> itemQuantityModels = new ArrayList<>();
+
+            for(var orderItem : b){
+
+                ItemQuantityModel itemQuantityModel = ItemQuantityModel.builder()
+                        .item(orderItem.getItem())
+                        .quantity(orderItem.getQuantity())
+                        .build();
+
+                itemQuantityModels.add(itemQuantityModel);
+
+            }
+            orderFetchResponseModels.add(
+                    OrderFetchModel.builder()
+                            .itemQuantityModels(itemQuantityModels)
+                            .OrderId(order.getId())
+                            .UserId(order.getUserId())
+                            .build());
+        }
+
+        return GetOrderResponse
+                .builder()
+                .orders(orderFetchResponseModels)
+                .build();
     }
 
     public UpdateOrderResponse update(UpdateOrderRequest request)
     {
 
-        Order oldOrder = orderRepository.findById(request.getOrderId()).orElseThrow(()-> new EntityNotFoundException("Order not found by id: " + request.getOrderId()));
-
-        List<Item> newItemList = itemRepository.findAll()
-                .stream().
-                filter(e->request.getItemIds().contains(e.getId()))
-                .toList();
+        Order oldOrder = orderRepository.findById(request.getOrderId()).orElseThrow(()-> new EntityNotFoundException(Constants.ORDER_NOT_FOUND_CONST + request.getOrderId()));
+        List<ItemQuantityModel> newItemQuantities = new ArrayList<>();
 
         //Delete old OrderItem relations
         List<OrderItem> oldRelations = orderItemRepository.findAll()
                 .stream()
                 .filter(e->e.getOrder().getId().equals(request.getOrderId()))
                 .toList();
-//        for(OrderItem relation : oldRelations){
-//            orderItemRepository.deleteById(relation.getId());
-//        }
+        for(OrderItem relation : oldRelations){
+            orderItemRepository.deleteById(relation.getId());
+        }
 
-        return null;
+        //Update order last update date
+        oldOrder.setLastUpdateDate(new Date());
+        Order newOrder = orderRepository.save(oldOrder);
+        //Create new relations
+        for(var itemQuantityModel : request.getItemQuantityModels())
+        {
+            Item item = itemRepository.findById(itemQuantityModel.getItem().getId()).orElseThrow(
+                    ()-> new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + itemQuantityModel.getItem().getId()
+                    )
+            );
+
+            newItemQuantities.add
+                (
+                    ItemQuantityModel
+                            .builder()
+                            .item(itemQuantityModel.getItem())
+                            .quantity(itemQuantityModel
+                            .getQuantity())
+                            .build()
+                );
+
+            OrderItem orderItem = OrderItem.builder()
+                    .order(newOrder)
+                    .item(item)
+                    .quantity(itemQuantityModel.getQuantity())
+                    .build();
+            orderItemRepository.save(orderItem);
+        }
+
+        return UpdateOrderResponse
+                .builder()
+                .updatedOrder(OrderUpdateModel
+                    .builder()
+                    .order_id(request.getOrderId())
+                    .updatedOrderItems(newItemQuantities)
+                    .build())
+                .build();
     }
 
     public void delete(Long id){
         return;
     }
 
-    public GetOrderResponse find(GetOrderRequest orderRequest){
+    public FindOrderResponse find(Long id){
 
-        return null;
+        Order order = orderRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(Constants.ORDER_NOT_FOUND_CONST + id));
+
+            List<OrderItem> b = orderItemRepository.findAll().stream().filter(x->x.getOrder().getId().equals(order.getId())).toList();
+            List<ItemQuantityModel> itemQuantityModels = new ArrayList<>();
+
+            for(var orderItem : b){
+
+                var itemQuantityModel = ItemQuantityModel.builder().item(orderItem.getItem()).quantity(orderItem.getQuantity()).build();
+                itemQuantityModels.add(itemQuantityModel);
+
+            }
+
+        OrderFetchModel orderFetchResponseModels = OrderFetchModel
+                .builder()
+                .UserId(order.getUserId())
+                .itemQuantityModels(itemQuantityModels)
+                .OrderId(order.getId())
+                .build();
+
+
+        return FindOrderResponse.builder().orderFetchModel(orderFetchResponseModels).build();
     }
 }

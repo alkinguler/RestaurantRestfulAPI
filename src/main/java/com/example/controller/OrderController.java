@@ -1,12 +1,8 @@
 package com.example.controller;
 
 import com.example.request.CreateOrderRequest;
-import com.example.request.GetOrderRequest;
 import com.example.request.UpdateOrderRequest;
-import com.example.response.CreateOrderResponse;
-import com.example.response.GetOrderResponse;
-import com.example.response.ServiceResponseModel;
-import com.example.response.UpdateOrderResponse;
+import com.example.response.*;
 import com.example.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +20,11 @@ public class OrderController {
     @GetMapping
     public ServiceResponseModel<GetOrderResponse> get(){
         return ServiceResponseModel.success(orderService.get());
+    }
+
+    @GetMapping("/{id}")
+    public ServiceResponseModel<FindOrderResponse> find(@PathVariable Long id){
+        return ServiceResponseModel.success(orderService.find(id));
     }
     @DeleteMapping("/{id}")
     public ServiceResponseModel<?> delete(@PathVariable Long id){

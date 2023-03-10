@@ -5,10 +5,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
 @Builder
 @Getter
 @Setter
-public class GetOrderResponse {
-    List<OrderFetchModel> orders;
+public class FindOrderResponse
+{
+    OrderFetchModel orderFetchModel;
 }

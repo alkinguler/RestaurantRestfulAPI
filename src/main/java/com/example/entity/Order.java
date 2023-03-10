@@ -28,4 +28,7 @@ public class Order {
 
     @Column(name = "total_price")
     private Integer TotalPrice;
+
+    @Column(name= "last_update_date")
+    private Date lastUpdateDate;
 }

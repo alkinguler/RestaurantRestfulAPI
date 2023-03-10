@@ -1,5 +1,6 @@
 package com.example.service;
 
+import com.example.Constants;
 import com.example.dao.ItemRepository;
 import com.example.dao.MenuItemRepository;
 import com.example.dao.MenuRepository;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -33,53 +33,69 @@ public class MenuService {
 
     private final MenuItemRepository menuItemRepository;
     public GetMenuResponse get() {
-        List<String> days = menuRepository.findAll().stream().map(Menu::getDay).toList();
-        List<MenuModel> menuModels = new ArrayList<>();
-        List<List<MenuItem>> menuItems = menuRepository.findAll().stream().map(Menu::getMenuItems).toList();
 
-       for (int i = 0; i < days.size(); i++){
-           var newMenuModel = MenuModel.builder()
-                   .menuItems(menuItems.get(i).stream().map(MenuItem::getItem).toList())
-                   .day(days.get(i))
-                   .build();
-           menuModels.add(newMenuModel);
-       }
-        var object =  new GetMenuResponse();
-       object.setMenuList(menuModels);
-       return object;
+        List<Menu> allMenus = menuRepository.findAll();
+        List<MenuModel> responseModels = new ArrayList<>();
+
+        for(var menu:allMenus){
+            List<Item> menuItems = menuItemRepository.findAll()
+                    .stream()
+                    .filter(
+                            menuItem -> menuItem.getMenu().getId().equals(menu.getId())
+                    )
+                    .map(MenuItem::getItem)
+                    .toList();
+            responseModels.add(MenuModel.builder().menuItems(menuItems).day(menu.getDay()).build());
+        }
+        var response = new GetMenuResponse();
+        response.setMenuList(responseModels);
+        return response;
 
     }
 
 
     public GetMenuResponse find(@PathVariable String day)
     {
+        try {
+            //Validation
+            if(menuRepository.findMenuIdByDay(day).isEmpty()){
+                throw new EntityNotFoundException(Constants.MENU_NOT_FOUND_BY_DAY_CONST + day);
+            }
 
-        List<Long> menuIds = menuRepository.findMenuIdByDay(day);
-        List<MenuModel> menuModels = new ArrayList<>();
+            List<Long> menuIds = menuRepository.findMenuIdByDay(day);
+            List<MenuModel> menuModels = new ArrayList<>();
 
 
+            for (var menuId : menuIds){
+                List<Item> menuItems = menuItemRepository.findAll()
+                        .stream()
+                        .filter(
+                                menuItem -> menuIds.contains(menuItem.getMenu().getId()) && menuItem.getMenu().getId().equals(menuId)
+                        )
+                        .map(MenuItem::getItem)
+                        .toList();
 
-        for (int i = 0; i < menuIds.size(); i++){
-            List<List<MenuItem>> menuItems = menuRepository.findById(menuIds.get(i)).stream().map(Menu::getMenuItems).toList();
+                MenuModel newMenuModel = MenuModel.builder()
+                        .menuItems(menuItems)
+                        .day(day)
+                        .build();
 
-            MenuModel newMenuModel = MenuModel.builder()
-                    .menuItems(menuItems.get(i).stream().map(MenuItem::getItem).toList())
-                    .day(day)
-                    .build();
-
-            menuModels.add(newMenuModel);
+                menuModels.add(newMenuModel);
+            }
+            var object =  new GetMenuResponse();
+            object.setMenuList(menuModels);
+            return object;
+        } catch (EntityNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,e.getMessage());
         }
-        var object =  new GetMenuResponse();
-        object.setMenuList(menuModels);
-        return object;
     }
 
     public void delete(Long id){
         try {
             if(menuRepository.findById(id).isEmpty()){
-                throw new EntityNotFoundException("Menu not found with id: " + id);
+                throw new EntityNotFoundException(Constants.MENU_NOT_FOUND_BY_ID_CONST + id);
             }
-            List<MenuItem> menuItems = menuRepository.findById(id).stream().map(Menu::getMenuItems).flatMap(Collection::stream).filter(e->e.getMenu().getId().equals(id)).toList();
+            List<MenuItem> menuItems = menuItemRepository.findAll().stream().filter(menuItem -> menuItem.getMenu().getId().equals(id)).toList();
 
             if(!menuItems.isEmpty())
             {
@@ -91,28 +107,64 @@ public class MenuService {
         catch (EntityNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,e.getMessage());
         }
-        catch (Exception e) {
-            throw e;
-        }
 
         menuRepository.deleteById(id);
     }
 
     public UpdateMenuResponse update(UpdateMenuRequest updateMenuRequest) {
-        try{
-            var menuId = updateMenuRequest.getMenuId();
-            var itemIdList = updateMenuRequest.getItemIdList();
-            List<Item> newItemList = new ArrayList<>();
-
-
-            //Validation
-
-            if(menuRepository.findById(menuId).isEmpty()){
-                throw new EntityNotFoundException("Menu not found with id: " + menuId);
+        try
+        {
+            if(menuRepository.findById(updateMenuRequest.getMenuId()).isEmpty()){
+                throw new EntityNotFoundException(Constants.MENU_NOT_FOUND_BY_ID_CONST + updateMenuRequest.getMenuId());
             }
 
-            //Delete old relations
-            List<MenuItem> oldItems = menuRepository.findById(menuId).stream().map(e->e.getMenuItems()).flatMap(Collection::stream).filter(e->e.getMenu().getId().equals(menuId)).toList();
+            Long menuId = updateMenuRequest.getMenuId();
+            List<Long> newItemIdList = updateMenuRequest.getItemIdList();
+            List<Item> newItemList = new ArrayList<>();
+            List<Long> oldItemIdList = menuItemRepository
+                    .findAll()
+                    .stream()
+
+                    .filter(menuItem-> menuItem.getMenu()
+                            .getId()
+                            .equals(menuId))
+                    .map(menuItem->menuItem.getItem().getId()).toList();
+
+            //Get old menu by menu_id
+            var oldMenu = menuRepository
+                    .findById(updateMenuRequest.getMenuId())
+                    .orElseThrow(
+                            () -> new EntityNotFoundException(Constants.MENU_NOT_FOUND_BY_ID_CONST + updateMenuRequest.getMenuId()));
+
+            //if request body day is not null, update it
+            if(!updateMenuRequest.getDay().isEmpty())
+            {
+                oldMenu.setDay(updateMenuRequest.getDay());
+                menuRepository.save(oldMenu);
+            }
+
+
+            //if old items and requested items are the same or new items are empty, break from the method.
+            if(newItemIdList.equals(oldItemIdList) || newItemIdList.isEmpty()){
+                List<Item> oldItemList = itemRepository.findAll()
+                        .stream()
+                        .filter(item -> oldItemIdList.contains(item.getId()))
+                        .toList();
+
+                return UpdateMenuResponse.builder()
+                        .UpdatedMenu(MenuModel.builder()
+                        .day(updateMenuRequest.getDay())
+                        .menuItems(oldItemList).build())
+                        .build();
+
+            }
+
+
+            List<MenuItem> oldItems = menuItemRepository
+                    .findAll()
+                    .stream()
+                    .filter(menuItem -> menuItem.getMenu().getId().equals(menuId)).toList();
+
 
             if(!oldItems.isEmpty())
             {
@@ -123,10 +175,19 @@ public class MenuService {
 
             //Add new relations
 
-            for(Long itemId : itemIdList){
-                var item = itemRepository.findById(itemId).orElseThrow(()-> new EntityNotFoundException("Item not found with id: " + itemId));
+            for(Long itemId : newItemIdList){
+                var item = itemRepository.findById(itemId).orElseThrow(()-> new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + itemId));
                 newItemList.add(item);
-                MenuItem menuItem = MenuItem.builder().item(item).menu(menuRepository.findById(menuId).get()).build();
+                MenuItem menuItem = MenuItem
+                        .builder()
+                        .item(item)
+                        .menu(
+                            menuRepository.findById(menuId).orElseThrow
+                            (
+                                ()-> new EntityNotFoundException(Constants.MENU_NOT_FOUND_BY_ID_CONST)
+                            )
+                        )
+                        .build();
                 menuItemRepository.save(menuItem);
             }
 
@@ -136,9 +197,6 @@ public class MenuService {
 
         } catch (EntityNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,e.getMessage());
-        }
-        catch (Exception e){
-            throw e;
         }
 
     }
@@ -152,15 +210,14 @@ public class MenuService {
         Menu savedMenu = menuRepository.save(Menu.builder().day(StringUtils.capitalize(createMenuRequest.getDay())).build());
 
         for(Long itemId : itemIdList){
-            var item = itemRepository.findById(itemId).orElseThrow(()-> new EntityNotFoundException("Item not found with id: " + itemId));
+            var item = itemRepository.findById(itemId).orElseThrow(()-> new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + itemId));
             newItemList.add(item);
             MenuItem menuItem = MenuItem.builder().item(item).menu(savedMenu).build();
             menuItemRepository.save(menuItem);
         }
 
         MenuModel menuResponseModel = MenuModel.builder().menuItems(newItemList).day(StringUtils.capitalize(createMenuRequest.getDay())).build();
-        CreateMenuResponse createdMenuResponse = CreateMenuResponse.builder().createdMenu(menuResponseModel).build();
-        return createdMenuResponse;
+        return CreateMenuResponse.builder().createdMenu(menuResponseModel).build();
     }
 
 }

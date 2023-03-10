@@ -28,8 +28,18 @@ public class MenuController {
     }
 
     @GetMapping("/{day}")
-    public ServiceResponseModel<GetMenuResponse> find(@PathVariable String day){
-        return ServiceResponseModel.success(menuService.find(day));
+    public ResponseEntity<ServiceResponseModel<?>> find(@PathVariable String day){
+        try
+        {
+            return new ResponseEntity<>(ServiceResponseModel.success(menuService.find(day)), HttpStatus.OK
+            );
+        }
+
+        catch (ResponseStatusException e)
+        {
+            return new ResponseEntity<>(ServiceResponseModel.failure(e.getMessage()), e.getStatusCode());
+        }
+
     }
 
     @PostMapping()
