@@ -27,7 +27,7 @@ public class Order {
     private Date date;
 
     @Column(name = "total_price")
-    private Integer TotalPrice;
+    private Integer totalPrice;
 
     @Column(name= "last_update_date")
     private Date lastUpdateDate;

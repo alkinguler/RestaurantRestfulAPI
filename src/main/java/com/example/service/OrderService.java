@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
@@ -33,17 +34,19 @@ public class OrderService {
     @Autowired
     private final ItemRepository itemRepository;
 
+    @Transactional()
     public CreateOrderResponse create(CreateOrderRequest request){
         try {
             //Get order info
             OrderModel orderModel = request.getOrder();
+            List<ItemQuantityModel> itemQuantityModels = new ArrayList<>();
 
             //Calculate totalPrice
-            int TotalPrice = orderModel.getOrderItems()
+            int totalPrice = orderModel.getOrderItems()
                     .stream()
                     .mapToInt(
-                            orderItem -> orderItem.getQuantity() * (itemRepository.findById(orderItem.getItem_id())
-                                    .orElseThrow(()->new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + orderItem.getItem_id()))
+                            orderItem -> orderItem.getQuantity() * (itemRepository.findById(orderItem.getItemId())
+                                    .orElseThrow(()->new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + orderItem.getItemId()))
                                     .getPrice())
                     )
                     .sum();
@@ -52,7 +55,7 @@ public class OrderService {
             Order order = Order.builder()
                     .userId(orderModel.getUserId())
                     .date(new Date())
-                    .TotalPrice(TotalPrice)
+                    .totalPrice(totalPrice)
                     .build();
 
             //Save order to db
@@ -61,7 +64,7 @@ public class OrderService {
             //Create and save order-item relations to db
             orderModel.getOrderItems().forEach(
                     orderItemModel -> {
-                        Item item = itemRepository.findById(orderItemModel.getItem_id()).orElseThrow();
+                        Item item = itemRepository.findById(orderItemModel.getItemId()).orElseThrow();
 
                         OrderItem orderItem = OrderItem.builder()
                                 .quantity(orderItemModel.getQuantity())
@@ -69,14 +72,29 @@ public class OrderService {
                                 .item(item)
                                 .build();
 
+                        ItemQuantityModel itemQuantityModel = ItemQuantityModel.builder()
+                                .quantity(orderItemModel.getQuantity())
+                                .item(item)
+                                .build();
+
+                        itemQuantityModels.add(itemQuantityModel);
+
+
                         orderItemRepository.save(orderItem);
                     }
             );
 
+            CreatedOrderModel createdOrder = CreatedOrderModel
+                    .builder()
+                    .orderId(savedOrder.getId())
+                    .orderedItems(itemQuantityModels)
+                    .userId(savedOrder.getUserId())
+                    .totalPrice(totalPrice)
+                    .build();
 
             return CreateOrderResponse
                     .builder()
-                    .createdOrder(orderModel)
+                    .createdOrder(createdOrder)
                     .build();
         }
 
@@ -85,9 +103,10 @@ public class OrderService {
         }
     }
 
+    @Transactional(readOnly = true)
     public GetOrderResponse get(){
         //Prepare required elements to fetch all orders
-        var orders = orderRepository.findAll();
+        List<Order> orders = orderRepository.findAll();
         List<OrderFetchModel> orderFetchResponseModels = new ArrayList<>();
 
         //Process response model list
@@ -104,15 +123,15 @@ public class OrderService {
             orderFetchResponseModels.add(
                     OrderFetchModel.builder()
                             .itemQuantityModels(itemQuantityModels)
-                            .OrderId(order.getId())
-                            .UserId(order.getUserId())
+                            .orderId(order.getId())
+                            .userId(order.getUserId())
                             .build());
         }
 
         return GetOrderResponse.builder().orders(orderFetchResponseModels).build();
 
     }
-
+    @Transactional(readOnly = true)
     public FindOrderResponse find(Long id){
         try {
             //Find order and order items
@@ -123,7 +142,7 @@ public class OrderService {
             //add item quantity models to orderItems
             for(var orderItem : orderItems){
 
-                var itemQuantityModel = ItemQuantityModel.builder().item(orderItem.getItem()).quantity(orderItem.getQuantity()).build();
+                ItemQuantityModel itemQuantityModel = ItemQuantityModel.builder().item(orderItem.getItem()).quantity(orderItem.getQuantity()).build();
                 itemQuantityModels.add(itemQuantityModel);
 
             }
@@ -131,9 +150,9 @@ public class OrderService {
             //Create fetched model to use it on response model
             OrderFetchModel orderFetchResponseModels = OrderFetchModel
                     .builder()
-                    .UserId(order.getUserId())
+                    .userId(order.getUserId())
                     .itemQuantityModels(itemQuantityModels)
-                    .OrderId(order.getId())
+                    .orderId(order.getId())
                     .build();
 
 
@@ -144,7 +163,7 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,e.getMessage());
         }
     }
-
+    @Transactional
     public UpdateOrderResponse update(UpdateOrderRequest request)
     {
         try {
@@ -168,8 +187,8 @@ public class OrderService {
             //Create new relations
             for(var orderItemModel : request.getOrderItemModels())
             {
-                Item item = itemRepository.findById(orderItemModel.getItem_id()).orElseThrow(
-                        ()-> new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + orderItemModel.getItem_id()
+                Item item = itemRepository.findById(orderItemModel.getItemId()).orElseThrow(
+                        ()-> new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + orderItemModel.getItemId()
                         )
                 );
 
@@ -211,10 +230,12 @@ public class OrderService {
                     .builder()
                     .updatedOrder(OrderUpdateModel
                             .builder()
-                            .order_id(request.getOrderId())
+                            .orderId(request.getOrderId())
                             .updatedOrderItems(newItemQuantities)
-                            .user_id(newOrder.getUserId())
-                            .build())
+                            .userId(newOrder.getUserId())
+                            .totalPrice(newTotalPrice)
+                            .build()
+                    )
                     .build();
         }
 
@@ -222,7 +243,7 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,e.getMessage());
         }
     }
-
+    @Transactional
     public void delete(Long id){
         try {
             //Validation of id

@@ -1,16 +1,15 @@
 package com.example.request;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
-@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 public class UpdateMenuRequest {
-    private Long MenuId;
-    private String Day;
+    private Long menuId;
+    private String day;
     private List<Long> itemIdList;
 }

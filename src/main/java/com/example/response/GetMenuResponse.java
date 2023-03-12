@@ -11,5 +11,5 @@ import java.util.List;
 @Setter
 @Builder
 public class GetMenuResponse {
-    List<MenuModel> menuList;
+    private List<MenuModel> menuList;
 }

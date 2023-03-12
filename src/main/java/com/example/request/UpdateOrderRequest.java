@@ -7,8 +7,9 @@ import java.util.List;
 
 @Getter
 @Setter
-@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateOrderRequest {
-    Long orderId;
-    List<OrderItemModel> orderItemModels;
+    private Long orderId;
+    private List<OrderItemModel> orderItemModels;
 }

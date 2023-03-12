@@ -8,6 +8,6 @@ import lombok.Setter;
 @Setter
 @Builder
 public class OrderItemModel {
-    Long item_id;
-    int quantity;
+    private Long itemId;
+    private int quantity;
 }

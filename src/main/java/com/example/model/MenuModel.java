@@ -11,6 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 public class MenuModel {
-    String day;
-    List<Item> menuItems;
+    private Long menuId;
+    private String day;
+    private List<Item> menuItems;
 }

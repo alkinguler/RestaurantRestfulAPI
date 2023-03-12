@@ -10,5 +10,5 @@ import java.util.List;
 @Getter
 @Setter
 public class GetOrderResponse {
-    List<OrderFetchModel> orders;
+    private List<OrderFetchModel> orders;
 }

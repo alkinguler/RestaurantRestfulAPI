@@ -1,6 +1,6 @@
 package com.example.response;
 
-import com.example.model.OrderModel;
+import com.example.model.CreatedOrderModel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,5 +9,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreateOrderResponse {
-    OrderModel createdOrder;
+    private CreatedOrderModel createdOrder;
 }

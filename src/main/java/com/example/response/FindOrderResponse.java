@@ -10,5 +10,5 @@ import lombok.Setter;
 @Setter
 public class FindOrderResponse
 {
-    OrderFetchModel orderFetchModel;
+    private OrderFetchModel orderFetchModel;
 }

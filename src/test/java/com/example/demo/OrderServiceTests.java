@@ -6,11 +6,10 @@ import com.example.dao.OrderRepository;
 import com.example.entity.Item;
 import com.example.entity.Order;
 import com.example.entity.OrderItem;
-import com.example.model.ItemQuantityModel;
-import com.example.model.OrderFetchModel;
-import com.example.model.OrderItemModel;
-import com.example.model.OrderUpdateModel;
+import com.example.model.*;
+import com.example.request.CreateOrderRequest;
 import com.example.request.UpdateOrderRequest;
+import com.example.response.CreateOrderResponse;
 import com.example.response.FindOrderResponse;
 import com.example.response.GetOrderResponse;
 import com.example.response.UpdateOrderResponse;
@@ -47,15 +46,37 @@ public class OrderServiceTests {
     private OrderService testService;
 
     @Test
-    void testGetOrder(){
-        List<Order> orders = Collections.singletonList(Order.builder().id(1L).date(new Date()).userId(123L).TotalPrice(3).build());
+    void testGetOrder() {
+        List<Order> orders = Collections.singletonList(Order.builder().id(1L).date(new Date()).userId(123L).totalPrice(3).build());
         List<Item> items = Collections.singletonList(Item.builder().id(1L).name("name").build());
         List<ItemQuantityModel> itemQuantityModels =
-                Collections.singletonList(ItemQuantityModel.builder().quantity(1).item(items.get(0)).build());
-        List<OrderFetchModel> orderFetchModels = Collections.singletonList(OrderFetchModel.builder().itemQuantityModels(itemQuantityModels)
-                .OrderId(orders.get(0).getId()).UserId(orders.get(0).getUserId()).build());
-        List<OrderItem> orderItems = Collections.singletonList(OrderItem.builder().order(orders.get(0)).quantity(itemQuantityModels.get(0).getQuantity()).item(items.get(0)).id(1L).build());
-
+                Collections.singletonList
+                        (
+                                ItemQuantityModel
+                                        .builder()
+                                        .quantity(1)
+                                        .item(items.get(0))
+                                        .build()
+                        );
+        List<OrderFetchModel> orderFetchModels =
+                Collections.singletonList(
+                        OrderFetchModel
+                                .builder()
+                                .itemQuantityModels(itemQuantityModels)
+                                .orderId(orders.get(0).getId()).userId(orders.get(0).getUserId())
+                                .build()
+                );
+        List<OrderItem> orderItems =
+                Collections.singletonList
+                        (
+                                OrderItem
+                                        .builder()
+                                        .order(orders.get(0))
+                                        .quantity(itemQuantityModels.get(0).getQuantity())
+                                        .item(items.get(0))
+                                        .id(1L)
+                                        .build()
+                        );
         GetOrderResponse expectedResponse = GetOrderResponse.builder().orders(orderFetchModels).build();
 
 
@@ -66,21 +87,48 @@ public class OrderServiceTests {
 
         Assertions.assertAll(
                 () -> Assertions.assertNotNull(actualResponse),
-                () -> Assertions.assertEquals(expectedResponse.getOrders().get(0).getItemQuantityModels().get(0).getItem(),actualResponse.getOrders().get(0).getItemQuantityModels().get(0).getItem()),
-                () -> Assertions.assertEquals(expectedResponse.getOrders().get(0).getItemQuantityModels().get(0).getQuantity(),actualResponse.getOrders().get(0).getItemQuantityModels().get(0).getQuantity()),
-                () -> Assertions.assertEquals(expectedResponse.getOrders().get(0).getOrderId(),actualResponse.getOrders().get(0).getOrderId()),
-                () -> Assertions.assertEquals(expectedResponse.getOrders().get(0).getUserId(),actualResponse.getOrders().get(0).getUserId())
+                () -> Assertions.assertEquals(expectedResponse.getOrders().get(0).getItemQuantityModels().get(0).getItem(), actualResponse.getOrders().get(0).getItemQuantityModels().get(0).getItem()),
+                () -> Assertions.assertEquals(expectedResponse.getOrders().get(0).getItemQuantityModels().get(0).getQuantity(), actualResponse.getOrders().get(0).getItemQuantityModels().get(0).getQuantity()),
+                () -> Assertions.assertEquals(expectedResponse.getOrders().get(0).getOrderId(), actualResponse.getOrders().get(0).getOrderId()),
+                () -> Assertions.assertEquals(expectedResponse.getOrders().get(0).getUserId(), actualResponse.getOrders().get(0).getUserId())
         );
 
     }
 
     @Test
-    void testFindOrder(){
-        Order order = Order.builder().id(1L).date(new Date()).userId(123L).TotalPrice(3).build();
+    void testFindOrder() {
+
+        Order order = Order.builder().id(1L).date(new Date()).userId(123L).totalPrice(3).build();
         List<Item> items = Collections.singletonList(Item.builder().id(1L).name("name").build());
-        List<OrderItem> orderItems = Collections.singletonList(OrderItem.builder().quantity(1).order(order).item(items.get(0)).id(1L).build());
-        List<ItemQuantityModel> itemQuantityModels = Collections.singletonList(ItemQuantityModel.builder().item(items.get(0)).quantity(orderItems.get(0).getQuantity()).build());
-        OrderFetchModel orderFetchModels = OrderFetchModel.builder().UserId(order.getUserId()).OrderId(order.getId()).itemQuantityModels(itemQuantityModels).build();
+        List<OrderItem> orderItems =
+                Collections.singletonList
+                        (
+                                OrderItem
+                                        .builder()
+                                        .quantity(1)
+                                        .order(order)
+                                        .item(items.get(0))
+                                        .id(1L)
+                                        .build()
+                        );
+
+        List<ItemQuantityModel> itemQuantityModels =
+                Collections.singletonList
+                        (
+                                ItemQuantityModel
+                                        .builder()
+                                        .item(items.get(0))
+                                        .quantity(orderItems.get(0).getQuantity())
+                                        .build()
+                        );
+
+        OrderFetchModel orderFetchModels = OrderFetchModel
+                .builder()
+                .userId(order.getUserId())
+                .orderId(order.getId())
+                .itemQuantityModels(itemQuantityModels)
+                .build();
+
         FindOrderResponse expectedResponse =
                 FindOrderResponse.builder().orderFetchModel(orderFetchModels).build();
 
@@ -91,48 +139,37 @@ public class OrderServiceTests {
         FindOrderResponse actualResponse = testService.find(1L);
 
         Assertions.assertAll(
-                () -> Assertions.assertEquals(expectedResponse.getOrderFetchModel().getOrderId(),actualResponse.getOrderFetchModel().getOrderId()),
-                () -> Assertions.assertEquals(expectedResponse.getOrderFetchModel().getUserId(),actualResponse.getOrderFetchModel().getUserId()),
-                () -> Assertions.assertEquals(expectedResponse.getOrderFetchModel().getItemQuantityModels().get(0).getQuantity(),actualResponse.getOrderFetchModel().getItemQuantityModels().get(0).getQuantity()),
-                () -> Assertions.assertEquals(expectedResponse.getOrderFetchModel().getItemQuantityModels().get(0).getItem(),actualResponse.getOrderFetchModel().getItemQuantityModels().get(0).getItem()),
-                () -> Assertions.assertThrows(ResponseStatusException.class,()-> testService.find(2L))
+                () -> Assertions.assertEquals(expectedResponse.getOrderFetchModel().getOrderId(), actualResponse.getOrderFetchModel().getOrderId()),
+                () -> Assertions.assertEquals(expectedResponse.getOrderFetchModel().getUserId(), actualResponse.getOrderFetchModel().getUserId()),
+                () -> Assertions.assertEquals(expectedResponse.getOrderFetchModel().getItemQuantityModels().get(0).getQuantity(), actualResponse.getOrderFetchModel().getItemQuantityModels().get(0).getQuantity()),
+                () -> Assertions.assertEquals(expectedResponse.getOrderFetchModel().getItemQuantityModels().get(0).getItem(), actualResponse.getOrderFetchModel().getItemQuantityModels().get(0).getItem()),
+                () -> Assertions.assertThrows(ResponseStatusException.class, () -> testService.find(2L))
         );
     }
 
     @Test
-    void testUpdateOrder(){
+    void testUpdateOrder() {
 
-        List<OrderItemModel> orderItemModels = Collections.singletonList(OrderItemModel.builder().item_id(1L).quantity(1).build());
+        List<OrderItemModel> orderItemModels = Collections.singletonList(OrderItemModel.builder().itemId(1L).quantity(1).build());
+
+        UpdateOrderRequest updateOrderRequest = new UpdateOrderRequest();
+        updateOrderRequest.setOrderId(1L);
+        updateOrderRequest.setOrderItemModels(orderItemModels);
+
+        UpdateOrderRequest updateOrderErrorRequest = new UpdateOrderRequest();
+        updateOrderErrorRequest.setOrderId(2L);
+        updateOrderErrorRequest.setOrderItemModels(orderItemModels);
+
         Item item = Item.builder().price(10).name("testItem").id(1L).build();
-        UpdateOrderRequest updateOrderRequest = UpdateOrderRequest
-                .builder()
-                .orderId(1L)
-                .orderItemModels(orderItemModels)
-                .build();
-
-        UpdateOrderRequest updateOrderErrorRequest = UpdateOrderRequest
-                .builder()
-                .orderId(2L)
-                .orderItemModels(orderItemModels)
-                .build();
 
         List<ItemQuantityModel> itemQuantityModels =
-                Collections.singletonList(ItemQuantityModel
-                        .builder()
-                        .quantity(
-                                orderItemModels.get(0)
-                                        .getQuantity())
-                        .item(item)
-                        .build());
+                Collections.singletonList(
+                        ItemQuantityModel.builder().quantity(orderItemModels.get(0).getQuantity()).item(item).build()
+                );
 
         List<Order> orders =
                 Collections.singletonList(
-                        Order.builder()
-                                .id(1L)
-                                .TotalPrice(10)
-                                .userId(123L)
-                                .date(new Date())
-                                .build()
+                        Order.builder().id(1L).totalPrice(10).userId(123L).date(new Date()).build()
                 );
 
         List<OrderItem> orderItems =
@@ -142,20 +179,17 @@ public class OrderServiceTests {
                                 .item(item)
                                 .order(orders.get(0))
                                 .id(1L)
-                                .quantity(
-                                        orderItemModels.get(0)
-                                        .getQuantity()
-                                )
-                        .build());
+                                .quantity(orderItemModels.get(0).getQuantity())
+                                .build()
+                );
         OrderUpdateModel orderUpdateModel =
-                OrderUpdateModel.
-                        builder()
-                        .user_id(orders.get(0).getUserId())
+                OrderUpdateModel
+                        .builder().userId(orders.get(0).getUserId())
                         .updatedOrderItems(itemQuantityModels)
-                        .order_id(orders.get(0).getId())
+                        .orderId(orders.get(0).getId())
+                        .totalPrice(itemQuantityModels.get(0).getQuantity()*itemQuantityModels.get(0).getItem().getPrice())
                         .build();
         UpdateOrderResponse expectedResponse = UpdateOrderResponse.builder().updatedOrder(orderUpdateModel).build();
-
 
 
         when(orderRepository.findById(1L)).thenReturn(Optional.ofNullable(orders.get(0)));
@@ -165,19 +199,74 @@ public class OrderServiceTests {
         when(orderRepository.save(any())).thenReturn(orders.get(0));
 
 
-
-        var actualResponse = testService.update(updateOrderRequest);
+        UpdateOrderResponse actualResponse = testService.update(updateOrderRequest);
 
 
         Assertions.assertAll(
-                () -> Assertions.assertEquals(expectedResponse.getUpdatedOrder().getUpdatedOrderItems().get(0).getItem(),actualResponse.getUpdatedOrder().getUpdatedOrderItems().get(0).getItem()),
-                () -> Assertions.assertEquals(expectedResponse.getUpdatedOrder().getUpdatedOrderItems().get(0).getQuantity(),actualResponse.getUpdatedOrder().getUpdatedOrderItems().get(0).getQuantity()),
-                () -> Assertions.assertEquals(expectedResponse.getUpdatedOrder().getOrder_id(),actualResponse.getUpdatedOrder().getOrder_id()),
-                () -> Assertions.assertEquals(expectedResponse.getUpdatedOrder().getUser_id(),actualResponse.getUpdatedOrder().getUser_id()),
-                () -> Assertions.assertThrows(ResponseStatusException.class,() -> testService.update(updateOrderErrorRequest))
+                () -> Assertions.assertEquals(expectedResponse.getUpdatedOrder().getUpdatedOrderItems().get(0).getItem(), actualResponse.getUpdatedOrder().getUpdatedOrderItems().get(0).getItem()),
+                () -> Assertions.assertEquals(expectedResponse.getUpdatedOrder().getUpdatedOrderItems().get(0).getQuantity(), actualResponse.getUpdatedOrder().getUpdatedOrderItems().get(0).getQuantity()),
+                () -> Assertions.assertEquals(expectedResponse.getUpdatedOrder().getTotalPrice(), actualResponse.getUpdatedOrder().getTotalPrice()),
+                () -> Assertions.assertEquals(expectedResponse.getUpdatedOrder().getOrderId(), actualResponse.getUpdatedOrder().getOrderId()),
+                () -> Assertions.assertEquals(expectedResponse.getUpdatedOrder().getUserId(), actualResponse.getUpdatedOrder().getUserId()),
+                () -> Assertions.assertThrows(ResponseStatusException.class, () -> testService.update(updateOrderErrorRequest))
         );
 
 
+    }
+
+    @Test
+    void testCreateOrder() {
+        Item item = Item.builder().name("testItem").id(1L).price(10).build();
+        List<OrderItemModel> orderItemModels = Collections.singletonList(
+                OrderItemModel.builder().itemId(item.getId()).quantity(2).build()
+        );
+
+
+
+        OrderModel orderModel = OrderModel.builder().userId(123L).orderItems(orderItemModels).build();
+        CreateOrderRequest orderRequest = new CreateOrderRequest();
+        orderRequest.setOrder(orderModel);
+
+        Order newOrder = Order
+                .builder()
+                .userId(orderRequest.getOrder().getUserId())
+                .id(1L)
+                .totalPrice(orderItemModels.get(0)
+                        .getQuantity()*10)
+                .build();
+
+        List<ItemQuantityModel> itemQuantityModels = Collections.singletonList(
+                ItemQuantityModel.builder().quantity(2).item(item).build()
+        );
+        CreatedOrderModel createdOrderModel = CreatedOrderModel
+                .builder()
+                .orderedItems(itemQuantityModels)
+                .userId(orderModel.getUserId())
+                .orderId(newOrder.getId())
+                .totalPrice(newOrder.getTotalPrice())
+                .build();
+        CreateOrderResponse expectedResponse = CreateOrderResponse.builder().createdOrder(createdOrderModel).build();
+
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        when(orderRepository.save(any())).thenReturn(newOrder);
+
+        CreateOrderResponse actualResponse = testService.create(orderRequest);
+
+        Assertions.assertAll(
+                () -> Assertions.assertNotNull(actualResponse.getCreatedOrder()),
+                () -> Assertions.assertNotNull(actualResponse.getCreatedOrder().getOrderId()),
+                () -> Assertions.assertEquals(actualResponse.getCreatedOrder().getOrderId(),newOrder.getId()),
+                () -> Assertions.assertEquals(
+                        expectedResponse.getCreatedOrder().getOrderedItems().get(0).getItem(),
+                        actualResponse.getCreatedOrder().getOrderedItems().get(0).getItem()
+                ),
+                () -> Assertions.assertEquals(
+                        expectedResponse.getCreatedOrder().getOrderedItems().get(0).getQuantity(),
+                        actualResponse.getCreatedOrder().getOrderedItems().get(0).getQuantity()
+                ),
+                () -> Assertions.assertEquals(expectedResponse.getCreatedOrder().getUserId(),actualResponse.getCreatedOrder().getUserId()),
+                () -> Assertions.assertEquals(expectedResponse.getCreatedOrder().getTotalPrice(),actualResponse.getCreatedOrder().getTotalPrice())
+        );
     }
 
 

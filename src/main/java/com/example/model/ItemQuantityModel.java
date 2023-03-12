@@ -9,6 +9,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ItemQuantityModel {
-    Item item;
-    int quantity;
+    private Item item;
+    private int quantity;
 }

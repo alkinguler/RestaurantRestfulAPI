@@ -9,5 +9,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UpdateMenuResponse {
-    MenuModel UpdatedMenu;
+    MenuModel updatedMenu;
 }

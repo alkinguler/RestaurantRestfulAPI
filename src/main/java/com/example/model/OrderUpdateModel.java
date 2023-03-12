@@ -1,6 +1,5 @@
 package com.example.model;
 
-import com.example.entity.Item;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +10,8 @@ import java.util.List;
 @Getter
 @Setter
 public class OrderUpdateModel {
-    private Long order_id;
-    private Long user_id;
+    private Long orderId;
+    private Long userId;
     private List<ItemQuantityModel> updatedOrderItems;
+    private Integer totalPrice;
 }

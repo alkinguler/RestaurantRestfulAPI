@@ -43,31 +43,41 @@ public class MenuService {
     {
         try {
             //Validation
+            if (createMenuRequest.getDay() == null || createMenuRequest.getDay().isEmpty()) {
+                throw new InvalidParameterException(Constants.DAY_NOT_FOUND_CONST);
+            }
+
             if(!Constants.DAY_LIST_CONST.contains(StringUtils.capitalize(createMenuRequest.getDay())))
             {
                 String errorMessage = String.format("'%s' %s",createMenuRequest.getDay(),Constants.WRONG_DAY_CONST);
-                throw new InvalidParameterException(
-                        errorMessage
-                );
+                throw new InvalidParameterException(errorMessage);
             }
+
 
             //Define request info and necessary variables
             List<Long> itemIdList = createMenuRequest.getItemIdList();
             List<Item> newItemList = new ArrayList<>();
 
-            //Update order day in db
+            //Update menu day in db if requested
             Menu savedMenu = menuRepository.save(Menu.builder().day(StringUtils.capitalize(createMenuRequest.getDay())).build());
+
+            //If there is no requested items, just return the model without assign any relations in db.
+            if(itemIdList == null || itemIdList.isEmpty()){
+                MenuModel noItemMenuModel = MenuModel.builder().menuId(savedMenu.getId()).day(createMenuRequest.getDay()).build();
+                return CreateMenuResponse.builder().createdMenu(noItemMenuModel).build();
+            }
+
 
             //Create relations
             for(Long itemId : itemIdList){
-                var item = itemRepository.findById(itemId).orElseThrow(()-> new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + itemId));
+                Item item = itemRepository.findById(itemId).orElseThrow(()-> new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + itemId));
                 newItemList.add(item);
                 MenuItem menuItem = MenuItem.builder().item(item).menu(savedMenu).build();
                 menuItemRepository.save(menuItem);
             }
 
             //Create menu response model
-            MenuModel menuResponseModel = MenuModel.builder().menuItems(newItemList).day(StringUtils.capitalize(createMenuRequest.getDay())).build();
+            MenuModel menuResponseModel = MenuModel.builder().menuId(savedMenu.getId()).menuItems(newItemList).day(StringUtils.capitalize(createMenuRequest.getDay())).build();
 
             return CreateMenuResponse.builder().createdMenu(menuResponseModel).build();
         }
@@ -90,7 +100,7 @@ public class MenuService {
                     )
                     .map(MenuItem::getItem)
                     .toList();
-            responseModels.add(MenuModel.builder().menuItems(menuItems).day(menu.getDay()).build());
+            responseModels.add(MenuModel.builder().menuId(menu.getId()).menuItems(menuItems).day(menu.getDay()).build());
         }
 
         return GetMenuResponse.builder().menuList(responseModels).build();
@@ -122,6 +132,7 @@ public class MenuService {
                 MenuModel newMenuModel = MenuModel.builder()
                         .menuItems(menuItems)
                         .day(day)
+                        .menuId(menuId)
                         .build();
 
                 menuModels.add(newMenuModel);
@@ -135,12 +146,10 @@ public class MenuService {
 
     @Transactional
     public UpdateMenuResponse update(UpdateMenuRequest updateMenuRequest) {
-
         try
         {
-            var x = menuRepository.findById(updateMenuRequest.getMenuId());
             //Validations
-            if(x.isEmpty()){
+            if(menuRepository.findById(updateMenuRequest.getMenuId()).isEmpty()){
                 throw new EntityNotFoundException(Constants.MENU_NOT_FOUND_BY_ID_CONST + updateMenuRequest.getMenuId());
             }
 
@@ -167,12 +176,12 @@ public class MenuService {
                     .toList();
 
             //Get old menu by menu_id
-            var oldMenu = menuRepository
+            Menu oldMenu = menuRepository
                     .findById(updateMenuRequest.getMenuId())
                     .orElseThrow(
                             () -> new EntityNotFoundException(Constants.MENU_NOT_FOUND_BY_ID_CONST + updateMenuRequest.getMenuId()));
 
-            //if request body day is not null, update it
+            //If request day is not null, update it
             if(!updateMenuRequest.getDay().isEmpty())
             {
                 oldMenu.setDay(updateMenuRequest.getDay());
@@ -180,7 +189,7 @@ public class MenuService {
             }
 
 
-            //if old items and requested items are the same or new items are empty, break from the method.
+            //If old items and requested items are the same or new items are empty, break from the method.
             if(newItemIdList.equals(oldItemIdList) || newItemIdList.isEmpty()){
                 List<Item> oldItemList = itemRepository.findAll()
                         .stream()
@@ -188,7 +197,8 @@ public class MenuService {
                         .toList();
 
                 return UpdateMenuResponse.builder()
-                        .UpdatedMenu(MenuModel.builder()
+                        .updatedMenu(MenuModel.builder()
+                                .menuId(oldMenu.getId())
                                 .day(updateMenuRequest.getDay())
                                 .menuItems(oldItemList).build())
                         .build();
@@ -201,7 +211,7 @@ public class MenuService {
                     .stream()
                     .filter(menuItem -> menuItem.getMenu().getId().equals(menuId)).toList();
 
-
+            //If there exists old items, delete them.
             if(!oldItems.isEmpty())
             {
                 for (var oldItem : oldItems){
@@ -210,9 +220,8 @@ public class MenuService {
             }
 
             //Add new relations
-
             for(Long itemId : newItemIdList){
-                var item = itemRepository.findById(itemId).orElseThrow(()-> new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + itemId));
+                Item item = itemRepository.findById(itemId).orElseThrow(()-> new EntityNotFoundException(Constants.ITEM_NOT_FOUND_CONST + itemId));
                 newItemList.add(item);
                 MenuItem menuItem = MenuItem
                         .builder()
@@ -227,11 +236,13 @@ public class MenuService {
                 menuItemRepository.save(menuItem);
             }
 
-            MenuModel responseMenuModel = MenuModel.builder().menuItems(newItemList).day(updateMenuRequest.getDay()).build();
+            MenuModel responseMenuModel = MenuModel.builder().menuId(oldMenu.getId()).menuItems(newItemList).day(updateMenuRequest.getDay()).build();
 
-            return UpdateMenuResponse.builder().UpdatedMenu(responseMenuModel).build();
+            return UpdateMenuResponse.builder().updatedMenu(responseMenuModel).build();
 
-        } catch (EntityNotFoundException | InvalidParameterException e) {
+        }
+
+        catch (EntityNotFoundException | InvalidParameterException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,e.getMessage());
         }
 

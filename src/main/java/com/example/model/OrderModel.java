@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 public class OrderModel {
 
-    private Long UserId;
+    private Long userId;
 
-    private List<OrderItemModel> OrderItems;
+    private List<OrderItemModel> orderItems;
 }
